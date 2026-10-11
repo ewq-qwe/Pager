@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Posts Pager</string>
+
+    <string name="onboarding_title_1">Welcome to Posts Pager</string>
+    <string name="onboarding_description_1">A simple REST API client for browsing posts from DummyJSON.</string>
+    <string name="onboarding_title_2">Create new posts</string>
+    <string name="onboarding_description_2">Send a POST request and instantly see the server response.</string>
+    <string name="onboarding_title_3">Edit and delete</string>
+    <string name="onboarding_description_3">Update posts with PUT and remove them with DELETE in one tap.</string>
+    <string name="onboarding_title_4">You are all set!</string>
+    <string name="onboarding_description_4">The app remembers that you have seen this introduction.</string>
+
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Get started</string>
+
+    <string name="action_get">GET</string>
+    <string name="action_post">POST</string>
+    <string name="action_put">PUT</string>
+    <string name="action_delete">DELETE</string>
+    <string name="action_show_onboarding">Show introduction again</string>
+
+    <string name="badge_dummyjson">DUMMYJSON</string>
+    <string name="onboarding_hint">Swipe left and right to explore the features or use the buttons below.</string>
+    <string name="onboarding_page_counter">Page %1$d of %2$d</string>
+
+    <string name="posts_subtitle">Posts feed</string>
+    <string name="rest_runner_title">REST endpoint runner</string>
+    <string name="response_title">Server response</string>
+    <string name="posts_section_title">Posts</string>
+    <string name="posts_empty">No posts yet. Press GET to load them.</string>
+</resources>
