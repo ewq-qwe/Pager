@@ -2,7 +2,16 @@ package com.ua.pavliyk.pager.di
 
 import co.touchlab.kermit.Logger as KermitLogger
 import com.russhwolf.settings.Settings
+import com.ua.pavliyk.pager.data.onboarding.AppOnboardingRepository
 import com.ua.pavliyk.pager.data.settings.AppSettings
+import com.ua.pavliyk.pager.domain.auth.validation.ValidatePasswordUseCase
+import com.ua.pavliyk.pager.domain.auth.validation.ValidateUsernameUseCase
+import com.ua.pavliyk.pager.domain.onboarding.CheckOnboardingCompletedUseCase
+import com.ua.pavliyk.pager.domain.onboarding.CompleteOnboardingUseCase
+import com.ua.pavliyk.pager.domain.onboarding.OnboardingRepository
+import com.ua.pavliyk.pager.domain.onboarding.ResetOnboardingUseCase
+import com.ua.pavliyk.pager.presentation.auth.AuthViewModel
+import com.ua.pavliyk.pager.presentation.main.MainViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
@@ -55,8 +64,23 @@ val settingsModule = module {
     singleOf(::AppSettings)
 }
 
+val onboardingModule = module {
+    singleOf(::AppOnboardingRepository) { bind<OnboardingRepository>() }
+    factoryOf(::CompleteOnboardingUseCase)
+    factoryOf(::CheckOnboardingCompletedUseCase)
+    factoryOf(::ResetOnboardingUseCase)
+    viewModelOf(::MainViewModel)
+}
+
+val authModule = module {
+    factoryOf(::ValidateUsernameUseCase)
+    factoryOf(::ValidatePasswordUseCase)
+    viewModelOf(::AuthViewModel)
+}
+
+// Declared last: top-level properties are initialized in order, so the included modules must already exist.
 val appModule = module {
-    includes(networkModule, settingsModule)
+    includes(networkModule, settingsModule, onboardingModule, authModule)
     singleOf(::AppPostRepository) { bind<PostRepository>() }
     factoryOf(::CreatePostUseCase)
     factoryOf(::EditPostUseCase)

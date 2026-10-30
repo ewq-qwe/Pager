@@ -68,13 +68,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import co.touchlab.kermit.Logger
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ua.pavliyk.pager.presentation.ui.ObserveEvents
 import com.ua.pavliyk.pager.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.absoluteValue
 
 @Immutable
@@ -92,19 +94,40 @@ private val onboardingPages = listOf(
     OnboardingPage(Res.string.onboarding_title_4, Res.string.onboarding_description_4, Res.drawable.ic_onboarding_done, "settings: onboarding = true"),
 )
 
-private val logger = Logger.withTag("OnboardingScreen")
+@Composable
+fun OnboardingRoute(
+    onNavigateToAuth: () -> Unit,
+    viewModel: OnboardingViewModel = koinViewModel(),
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    ObserveEvents(viewModel.events) { event ->
+        when (event) {
+            OnboardingEvent.NavigateToAuth -> onNavigateToAuth()
+        }
+    }
+
+    OnboardingScreen(
+        state = state,
+        onAction = viewModel::onAction,
+    )
+}
 
 @Composable
-fun OnboardingScreen(
-    onFinish: () -> Unit,
+internal fun OnboardingScreen(
+    state: OnboardingState,
+    onAction: (OnboardingAction) -> Unit,
 ) {
-    val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
+    val pagerState = rememberPagerState(
+        initialPage = state.currentPage,
+        pageCount = { onboardingPages.size },
+    )
     val coroutineScope = rememberCoroutineScope()
     val isLastPage = pagerState.currentPage == pagerState.pageCount - 1
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
-            logger.i { "Current page: $page" }
+            onAction(OnboardingAction.OnPageChanged(page))
         }
     }
 
@@ -129,10 +152,7 @@ fun OnboardingScreen(
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             )
             TextButton(
-                onClick = {
-                    logger.i { "Onboarding skipped on page ${pagerState.currentPage}" }
-                    onFinish()
-                },
+                onClick = { onAction(OnboardingAction.OnSkip) },
                 enabled = !isLastPage,
             ) {
                 Text(stringResource(Res.string.onboarding_skip))
@@ -187,7 +207,7 @@ fun OnboardingScreen(
             Button(
                 onClick = {
                     if (isLastPage) {
-                        onFinish()
+                        onAction(OnboardingAction.OnFinish)
                     } else {
                         coroutineScope.launch {
                             pagerState.animateScrollToPage(pagerState.currentPage + 1)
@@ -372,6 +392,6 @@ private fun Modifier.pageTransition(pagerState: PagerState, page: Int): Modifier
 @Composable
 private fun OnboardingScreenPreview() {
     AppTheme {
-        OnboardingScreen(onFinish = {})
+        OnboardingScreen(state = OnboardingState(), onAction = {})
     }
 }

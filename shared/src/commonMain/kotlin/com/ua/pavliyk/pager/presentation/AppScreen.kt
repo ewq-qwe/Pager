@@ -31,8 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ua.pavliyk.pager.presentation.onboarding.OnboardingScreen
-import com.ua.pavliyk.pager.presentation.onboarding.OnboardingViewModel
+import com.ua.pavliyk.pager.presentation.navigation.AppNavigation
 import com.ua.pavliyk.pager.presentation.onboarding.Pill
 import com.ua.pavliyk.pager.data.posts.model.responses.Post
 import com.ua.pavliyk.pager.presentation.ui.ObserveEvents
@@ -46,26 +45,14 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun App(
-    onboardingViewModel: OnboardingViewModel = koinViewModel(),
-) {
+fun App() {
     AppTheme {
-        val isOnboardingCompleted by onboardingViewModel.isOnboardingCompleted.collectAsStateWithLifecycle()
-
-        if (isOnboardingCompleted) {
-            PostsScreen(
-                onShowOnboarding = onboardingViewModel::showOnboardingAgain
-            )
-        } else {
-            OnboardingScreen(
-                onFinish = onboardingViewModel::completeOnboarding
-            )
-        }
+        AppNavigation()
     }
 }
 
 @Composable
-private fun PostsScreen(
+internal fun PostsScreen(
     onShowOnboarding: () -> Unit,
     viewModel: AppViewModel = koinViewModel(),
 ) {

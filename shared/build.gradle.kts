@@ -63,6 +63,8 @@ kotlin {
             implementation(libs.kermit)
             implementation(libs.multiplatform.settings)
             implementation(libs.multiplatform.settings.noArg)
+            implementation(libs.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodelNavigation3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

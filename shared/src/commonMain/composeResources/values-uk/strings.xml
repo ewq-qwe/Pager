@@ -30,4 +30,23 @@
     <string name="response_title">Відповідь сервера</string>
     <string name="posts_section_title">Дописи</string>
     <string name="posts_empty">Дописів ще немає. Натисніть «Отримати», щоб завантажити їх.</string>
+
+    <string name="auth_title">З поверненням</string>
+    <string name="auth_subtitle">Увійдіть, щоб продовжити роботу з дописами DummyJSON.</string>
+    <string name="auth_username_label">Ім’я користувача</string>
+    <string name="auth_username_placeholder">наприклад, emilys</string>
+    <string name="auth_password_label">Пароль</string>
+    <string name="auth_password_placeholder">Щонайменше 8 символів</string>
+    <string name="auth_show_password">Показати пароль</string>
+    <string name="auth_hide_password">Приховати пароль</string>
+    <string name="auth_sign_in">Увійти</string>
+    <string name="auth_keyboard_hint">Натисніть «Далі» на клавіатурі, щоб перейти до пароля, і «Готово», щоб увійти.</string>
+
+    <string name="error_username_empty">Введіть ім’я користувача</string>
+    <string name="error_username_too_short">Ім’я має містити щонайменше %1$d символи</string>
+    <string name="error_username_too_long">Ім’я має містити не більше %1$d символів</string>
+    <string name="error_username_invalid">Використовуйте лише латинські літери, цифри, крапки та підкреслення</string>
+    <string name="error_password_empty">Введіть пароль</string>
+    <string name="error_password_too_short">Пароль має містити щонайменше %1$d символів</string>
+    <string name="error_password_spaces">Пароль не повинен містити пробілів</string>
 </resources>

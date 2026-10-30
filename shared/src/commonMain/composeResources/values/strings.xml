@@ -30,4 +30,23 @@
     <string name="response_title">Server response</string>
     <string name="posts_section_title">Posts</string>
     <string name="posts_empty">No posts yet. Press GET to load them.</string>
+
+    <string name="auth_title">Welcome back</string>
+    <string name="auth_subtitle">Sign in to continue working with the DummyJSON posts.</string>
+    <string name="auth_username_label">Username</string>
+    <string name="auth_username_placeholder">e.g. emilys</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_password_placeholder">At least 8 characters</string>
+    <string name="auth_show_password">Show password</string>
+    <string name="auth_hide_password">Hide password</string>
+    <string name="auth_sign_in">Sign in</string>
+    <string name="auth_keyboard_hint">Press “Next” on the keyboard to move to the password and “Done” to sign in.</string>
+
+    <string name="error_username_empty">Enter your username</string>
+    <string name="error_username_too_short">Username must be at least %1$d characters</string>
+    <string name="error_username_too_long">Username must be at most %1$d characters</string>
+    <string name="error_username_invalid">Use only latin letters, digits, dots and underscores</string>
+    <string name="error_password_empty">Enter your password</string>
+    <string name="error_password_too_short">Password must be at least %1$d characters</string>
+    <string name="error_password_spaces">Password must not contain spaces</string>
 </resources>
