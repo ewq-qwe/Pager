@@ -8,7 +8,7 @@ import kotlinx.serialization.SerializationException
 
 internal sealed class Result<out T>  {
     data class Success<T>(val data: T) : Result<T>()
-    data class Failure(val errorMessage: String) : Result<Nothing>()
+    data class Failure(val errorMessage: String, val code: Int? = null) : Result<Nothing>()
 }
 
 internal inline fun <T> Result<T>.onSuccess(action: (T) -> Unit): Result<T> {
@@ -28,7 +28,7 @@ internal inline fun <T> Result<T>.onFailure(action: (String) -> Unit): Result<T>
 internal inline fun <T, R> Result<T>.map(transform: (T) -> R): Result<R> {
     return when (this) {
         is Result.Success -> Result.Success(transform(data))
-        is Result.Failure -> Result.Failure(errorMessage)
+        is Result.Failure -> this
     }
 }
 
@@ -44,7 +44,7 @@ internal suspend inline fun <reified T> HttpResponse.handleResponse(): Result<T>
         }
         else -> {
             val errorBody = bodyAsText()
-            Result.Failure("Error ${status.value}: $errorBody")
+            Result.Failure("Error ${status.value}: $errorBody", status.value)
         }
     }
 }

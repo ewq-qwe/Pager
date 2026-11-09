@@ -49,4 +49,15 @@
     <string name="error_password_empty">Введіть пароль</string>
     <string name="error_password_too_short">Пароль має містити щонайменше %1$d символів</string>
     <string name="error_password_spaces">Пароль не повинен містити пробілів</string>
+
+    <string name="auth_error_invalid_credentials">Невірне ім’я користувача або пароль</string>
+    <string name="auth_error_network">Немає зв’язку із сервером. Перевірте інтернет і спробуйте ще раз</string>
+    <string name="auth_error_unknown">Щось пішло не так. Спробуйте пізніше</string>
+
+    <string name="home_title">Головна</string>
+    <string name="home_greeting">Привіт, %1$s!</string>
+    <string name="home_error">Не вдалося завантажити профіль</string>
+    <string name="home_retry">Спробувати ще раз</string>
+    <string name="home_open_posts">Відкрити дописи</string>
+    <string name="home_logout">Вийти</string>
 </resources>

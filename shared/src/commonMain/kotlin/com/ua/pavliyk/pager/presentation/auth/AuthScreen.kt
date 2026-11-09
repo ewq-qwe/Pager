@@ -24,15 +24,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +60,9 @@ import com.ua.pavliyk.pager.domain.auth.validation.ValidateUsernameUseCase
 import com.ua.pavliyk.pager.presentation.onboarding.Pill
 import com.ua.pavliyk.pager.presentation.ui.ObserveEvents
 import com.ua.pavliyk.pager.ui.theme.AppTheme
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -70,6 +77,9 @@ import pager.shared.generated.resources.auth_subtitle
 import pager.shared.generated.resources.auth_title
 import pager.shared.generated.resources.auth_username_label
 import pager.shared.generated.resources.auth_username_placeholder
+import pager.shared.generated.resources.auth_error_invalid_credentials
+import pager.shared.generated.resources.auth_error_network
+import pager.shared.generated.resources.auth_error_unknown
 import pager.shared.generated.resources.badge_dummyjson
 import pager.shared.generated.resources.error_password_empty
 import pager.shared.generated.resources.error_password_spaces
@@ -87,20 +97,26 @@ import pager.shared.generated.resources.ic_visibility_off
 
 @Composable
 fun AuthRoute(
-    onNavigateToPosts: () -> Unit,
+    onNavigateToHome: () -> Unit,
     viewModel: AuthViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     ObserveEvents(viewModel.events) { event ->
         when (event) {
-            AuthEvent.NavigateToPosts -> onNavigateToPosts()
+            AuthEvent.NavigateToHome -> onNavigateToHome()
+            is AuthEvent.ShowError -> coroutineScope.launch {
+                snackbarHostState.showSnackbar(getString(event.error.messageRes()))
+            }
         }
     }
 
     AuthScreen(
         state = state,
         onAction = viewModel::onAction,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -108,202 +124,220 @@ fun AuthRoute(
 internal fun AuthScreen(
     state: AuthState,
     onAction: (AuthAction) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val passwordFocusRequester = remember { FocusRequester() }
 
-    // The same action for the "Sign in" button and the keyboard action of the password field.
     val signIn = {
         keyboard?.hide()
         focusManager.clearFocus()
         onAction(AuthAction.OnSignIn)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .systemBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Pill(
-            text = stringResource(Res.string.badge_dummyjson),
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.align(Alignment.Start),
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Box(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
-            contentAlignment = Alignment.Center,
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .systemBarsPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_lock),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.size(48.dp),
+            Pill(
+                text = stringResource(Res.string.badge_dummyjson),
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.align(Alignment.Start),
             )
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = stringResource(Res.string.auth_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(Res.string.auth_subtitle),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Card(
-            modifier = Modifier
-                .widthIn(max = 480.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
             ) {
-                OutlinedTextField(
-                    value = state.username,
-                    onValueChange = { onAction(AuthAction.OnUsernameChange(it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(Res.string.auth_username_label)) },
-                    placeholder = { Text(stringResource(Res.string.auth_username_placeholder)) },
-                    leadingIcon = {
-                        Icon(painterResource(Res.drawable.ic_person), contentDescription = null)
-                    },
-                    isError = state.usernameError != null,
-                    supportingText = state.usernameError?.let { { Text(it.message()) } },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        autoCorrectEnabled = false,
-                        imeAction = ImeAction.Next,
-                    ),
-                    // Keyboard action "Next" moves the focus to the password field.
-                    keyboardActions = KeyboardActions(
-                        onNext = { passwordFocusRequester.requestFocus() },
-                    ),
+                Icon(
+                    painter = painterResource(Res.drawable.ic_lock),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(48.dp),
                 )
+            }
 
-                OutlinedTextField(
-                    value = state.password,
-                    onValueChange = { onAction(AuthAction.OnPasswordChange(it)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(passwordFocusRequester),
-                    label = { Text(stringResource(Res.string.auth_password_label)) },
-                    placeholder = { Text(stringResource(Res.string.auth_password_placeholder)) },
-                    leadingIcon = {
-                        Icon(painterResource(Res.drawable.ic_lock), contentDescription = null)
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { onAction(AuthAction.OnTogglePasswordVisibility) }) {
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(Res.string.auth_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(Res.string.auth_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Card(
+                modifier = Modifier
+                    .widthIn(max = 480.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    OutlinedTextField(
+                        value = state.username,
+                        onValueChange = { onAction(AuthAction.OnUsernameChange(it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isLoading,
+                        label = { Text(stringResource(Res.string.auth_username_label)) },
+                        placeholder = { Text(stringResource(Res.string.auth_username_placeholder)) },
+                        leadingIcon = {
+                            Icon(painterResource(Res.drawable.ic_person), contentDescription = null)
+                        },
+                        isError = state.usernameError != null,
+                        supportingText = state.usernameError?.let { { Text(it.message()) } },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Text,
+                            autoCorrectEnabled = false,
+                            imeAction = ImeAction.Next,
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { passwordFocusRequester.requestFocus() },
+                        ),
+                    )
+
+                    OutlinedTextField(
+                        value = state.password,
+                        onValueChange = { onAction(AuthAction.OnPasswordChange(it)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(passwordFocusRequester),
+                        enabled = !state.isLoading,
+                        label = { Text(stringResource(Res.string.auth_password_label)) },
+                        placeholder = { Text(stringResource(Res.string.auth_password_placeholder)) },
+                        leadingIcon = {
+                            Icon(painterResource(Res.drawable.ic_lock), contentDescription = null)
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { onAction(AuthAction.OnTogglePasswordVisibility) }) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (state.isPasswordVisible) Res.drawable.ic_visibility_off
+                                        else Res.drawable.ic_visibility
+                                    ),
+                                    contentDescription = stringResource(
+                                        if (state.isPasswordVisible) Res.string.auth_hide_password
+                                        else Res.string.auth_show_password
+                                    ),
+                                )
+                            }
+                        },
+                        visualTransformation = if (state.isPasswordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        isError = state.passwordError != null,
+                        supportingText = state.passwordError?.let { { Text(it.message()) } },
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            autoCorrectEnabled = false,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { signIn() },
+                        ),
+                    )
+
+                    Button(
+                        onClick = signIn,
+                        enabled = !state.isLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(16.dp),
+                    ) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(Res.string.auth_sign_in),
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Icon(
-                                painter = painterResource(
-                                    if (state.isPasswordVisible) Res.drawable.ic_visibility_off
-                                    else Res.drawable.ic_visibility
-                                ),
-                                contentDescription = stringResource(
-                                    if (state.isPasswordVisible) Res.string.auth_hide_password
-                                    else Res.string.auth_show_password
-                                ),
+                                painter = painterResource(Res.drawable.ic_arrow_forward),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
                             )
                         }
-                    },
-                    visualTransformation = if (state.isPasswordVisible) {
-                        VisualTransformation.None
-                    } else {
-                        PasswordVisualTransformation()
-                    },
-                    isError = state.passwordError != null,
-                    supportingText = state.passwordError?.let { { Text(it.message()) } },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        autoCorrectEnabled = false,
-                        imeAction = ImeAction.Done,
-                    ),
-                    // Keyboard action "Done" signs the user in, the same as the "Sign in" button.
-                    keyboardActions = KeyboardActions(
-                        onDone = { signIn() },
-                    ),
-                )
+                    }
+                }
+            }
 
-                Button(
-                    onClick = signIn,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(16.dp),
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Surface(
+                modifier = Modifier
+                    .widthIn(max = 480.dp)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = stringResource(Res.string.auth_sign_in),
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Icon(
-                        painter = painterResource(Res.drawable.ic_arrow_forward),
+                        painter = painterResource(Res.drawable.ic_lightbulb),
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = stringResource(Res.string.auth_keyboard_hint),
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Surface(
+        SnackbarHost(
+            hostState = snackbarHostState,
             modifier = Modifier
-                .widthIn(max = 480.dp)
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ) {
-            Row(
-                modifier = Modifier.padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(Res.drawable.ic_lightbulb),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(Res.string.auth_keyboard_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
+                .align(Alignment.BottomCenter)
+                .systemBarsPadding()
+                .imePadding(),
+        )
     }
 }
 
@@ -320,6 +354,12 @@ private fun PasswordError.message(): String = when (this) {
     PasswordError.EMPTY -> stringResource(Res.string.error_password_empty)
     PasswordError.TOO_SHORT -> stringResource(Res.string.error_password_too_short, ValidatePasswordUseCase.MIN_LENGTH)
     PasswordError.CONTAINS_SPACES -> stringResource(Res.string.error_password_spaces)
+}
+
+private fun AuthError.messageRes(): StringResource = when (this) {
+    AuthError.INVALID_CREDENTIALS -> Res.string.auth_error_invalid_credentials
+    AuthError.NETWORK -> Res.string.auth_error_network
+    AuthError.UNKNOWN -> Res.string.auth_error_unknown
 }
 
 @Preview

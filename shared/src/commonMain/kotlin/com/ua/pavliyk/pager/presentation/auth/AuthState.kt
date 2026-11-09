@@ -11,6 +11,6 @@ internal data class AuthState(
     val usernameError: UsernameError? = null,
     val passwordError: PasswordError? = null,
     val isPasswordVisible: Boolean = false,
-    // Errors are shown live only after the first sign in attempt, not while the user starts typing.
     val isSubmitted: Boolean = false,
+    val isLoading: Boolean = false,
 )

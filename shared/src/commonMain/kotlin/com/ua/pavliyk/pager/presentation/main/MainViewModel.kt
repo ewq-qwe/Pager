@@ -2,7 +2,9 @@ package com.ua.pavliyk.pager.presentation.main
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.ua.pavliyk.pager.domain.auth.session.IsUserAuthorizedUseCase
 import com.ua.pavliyk.pager.domain.onboarding.CheckOnboardingCompletedUseCase
 import com.ua.pavliyk.pager.domain.onboarding.ResetOnboardingUseCase
 import com.ua.pavliyk.pager.presentation.navigation.Route
@@ -13,11 +15,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @Stable
 class MainViewModel internal constructor(
     private val checkOnboardingCompletedUseCase: CheckOnboardingCompletedUseCase,
     private val resetOnboardingUseCase: ResetOnboardingUseCase,
+    private val isUserAuthorizedUseCase: IsUserAuthorizedUseCase,
 ) : ViewModel() {
 
     private val logger = Logger.withTag("MainViewModel")
@@ -39,10 +43,17 @@ class MainViewModel internal constructor(
     }
 
     private fun resolveStartRoute() {
-        val isOnboardingCompleted = checkOnboardingCompletedUseCase()
-        val startRoute = if (isOnboardingCompleted) Route.Auth else Route.Onboarding
-        logger.i { "Onboarding completed: $isOnboardingCompleted, start route: $startRoute" }
-        _state.update { it.copy(startRoute = startRoute) }
+        viewModelScope.launch {
+            val isOnboardingCompleted = checkOnboardingCompletedUseCase()
+            val isAuthorized = isUserAuthorizedUseCase()
+            val startRoute = when {
+                !isOnboardingCompleted -> Route.Onboarding
+                isAuthorized -> Route.Home
+                else -> Route.Auth
+            }
+            logger.i { "Onboarding completed: $isOnboardingCompleted, authorized: $isAuthorized, start route: $startRoute" }
+            _state.update { it.copy(startRoute = startRoute) }
+        }
     }
 
     private fun showOnboardingAgain() {

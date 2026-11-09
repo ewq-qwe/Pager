@@ -2,7 +2,10 @@ package com.ua.pavliyk.pager.presentation.auth
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import com.ua.pavliyk.pager.data.common.Result
+import com.ua.pavliyk.pager.domain.auth.login.LoginUseCase
 import com.ua.pavliyk.pager.domain.auth.validation.ValidatePasswordUseCase
 import com.ua.pavliyk.pager.domain.auth.validation.ValidateUsernameUseCase
 import kotlinx.coroutines.channels.Channel
@@ -12,11 +15,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 @Stable
 class AuthViewModel internal constructor(
     private val validateUsernameUseCase: ValidateUsernameUseCase,
     private val validatePasswordUseCase: ValidatePasswordUseCase,
+    private val loginUseCase: LoginUseCase,
 ) : ViewModel() {
 
     private val logger = Logger.withTag("AuthViewModel")
@@ -50,6 +55,8 @@ class AuthViewModel internal constructor(
 
     private fun signIn() {
         val current = _state.value
+        if (current.isLoading) return
+
         val usernameError = validateUsernameUseCase(current.username)
         val passwordError = validatePasswordUseCase(current.password)
 
@@ -66,7 +73,19 @@ class AuthViewModel internal constructor(
             return
         }
 
-        logger.i { "Signed in as ${current.username.trim()}" }
-        _events.trySend(AuthEvent.NavigateToPosts)
+        _state.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            when (val result = loginUseCase(current.username, current.password)) {
+                is Result.Success -> {
+                    logger.i { "Signed in as ${current.username.trim()}" }
+                    _events.trySend(AuthEvent.NavigateToHome)
+                }
+                is Result.Failure -> {
+                    logger.e { "Sign in failed: ${result.errorMessage}" }
+                    _events.trySend(AuthEvent.ShowError(result.toAuthError()))
+                }
+            }
+            _state.update { it.copy(isLoading = false) }
+        }
     }
 }

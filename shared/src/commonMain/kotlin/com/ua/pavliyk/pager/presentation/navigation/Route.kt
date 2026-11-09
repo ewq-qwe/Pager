@@ -16,15 +16,18 @@ sealed interface Route : NavKey {
     data object Auth : Route
 
     @Serializable
+    data object Home : Route
+
+    @Serializable
     data object Posts : Route
 }
 
-// Non-JVM targets (web) have no reflection, so every key is registered for polymorphic serialization.
 internal val navigationConfig = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(Route.Onboarding::class, Route.Onboarding.serializer())
             subclass(Route.Auth::class, Route.Auth.serializer())
+            subclass(Route.Home::class, Route.Home.serializer())
             subclass(Route.Posts::class, Route.Posts.serializer())
         }
     }

@@ -49,4 +49,15 @@
     <string name="error_password_empty">Enter your password</string>
     <string name="error_password_too_short">Password must be at least %1$d characters</string>
     <string name="error_password_spaces">Password must not contain spaces</string>
+
+    <string name="auth_error_invalid_credentials">Invalid username or password</string>
+    <string name="auth_error_network">No connection to the server. Check your internet and try again</string>
+    <string name="auth_error_unknown">Something went wrong. Please try again later</string>
+
+    <string name="home_title">Home</string>
+    <string name="home_greeting">Hello, %1$s!</string>
+    <string name="home_error">Could not load your profile</string>
+    <string name="home_retry">Try again</string>
+    <string name="home_open_posts">Open posts</string>
+    <string name="home_logout">Sign out</string>
 </resources>
